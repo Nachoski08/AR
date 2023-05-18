@@ -1,3 +1,8 @@
+# no extension files
+*
+!*/
+!*.*
+
 # Prerequisites
 *.d
 
@@ -41,6 +46,8 @@
 *.su
 *.idb
 *.pdb
+build
+.vscode
 
 # Kernel Module Compile Results
 *.mod*
@@ -50,3 +57,4 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+*.Identifier
