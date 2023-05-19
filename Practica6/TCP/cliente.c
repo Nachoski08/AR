@@ -14,7 +14,8 @@ int main(int argc, char *argv[])
 {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
-    int sfd, s, j;
+    int sfd, s;
+    int finished = 0;
     ssize_t len;
     ssize_t nread;
     char buf[BUF_SIZE];
@@ -62,31 +63,34 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(result);           /* No longer needed */
 
-    /* Send remaining command-line arguments as separate
-       datagrams, and read responses from server */
+    while (!finished){
+        printf("Introduce el comando: ");
+        fscanf(stdin, "%s", buf);
 
-    for (j = 3; j < argc; j++) {
-        len = (ssize_t)strlen(argv[j]) + 1;
-                /* +1 for terminating null byte */
+        len = (ssize_t)strlen(buf) + 1; /* +1 for terminating null byte */
 
         if (len + 1 > BUF_SIZE) {
-            fprintf(stderr,
-                    "Ignoring long message in argument %d\n", j);
+            fprintf(stderr, "Ignoring long command");
             continue;
         }
 
-        if (write(sfd, argv[j], (size_t)len) != len) {
+        if (sendto(sfd, buf, (size_t)len, 0, rp->ai_addr, rp->ai_addrlen) != len) {
             fprintf(stderr, "partial/failed write\n");
             exit(EXIT_FAILURE);
         }
 
-        nread = read(sfd, buf, BUF_SIZE);
+        memset(buf, 0, BUF_SIZE);
+        nread = recvfrom(sfd, buf, BUF_SIZE, 0, rp->ai_addr, &rp->ai_addrlen);
         if (nread == -1) {
             perror("read");
             exit(EXIT_FAILURE);
         }
-
-        printf("Received %zd bytes: %s\n", nread, buf);
+        else if (nread == 0 || strcmp(buf, "q") == 0){
+            finished = 1;
+        }
+        else{
+            printf("Received %zd bytes: %s\n", nread, buf);
+        }
     }
 
     exit(EXIT_SUCCESS);
